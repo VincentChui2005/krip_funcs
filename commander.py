@@ -7,13 +7,12 @@ class Commander:
         self.caller = caller
         self.tree = Tree()
 
-        self.tree.create_node("/", "/")
+        self.tree.create_node(self.caller, self.caller)
 
     def __call__(self, cmd:str):
         if cmd.find(self.caller) == 0:
+            cmd = "\"" + self.caller + "\" " + cmd[len(self.caller):]
             phrases = shlex.split(cmd)
-            phrases[0] = phrases[0].split(self.caller)[1]  # Remove the caller tag in the first phrase
-            phrases.insert(0, "/")  # Put the caller tag as the very first phrase
 
             p, a = self._split(phrases)
             return self._run(p, *a)
@@ -50,7 +49,7 @@ class Commander:
 
     def _add_func(self, func, name="", parent=""):
         name = name or func.__name__
-        parent = "/" + ("" if parent == "" else ":" + parent)
+        parent = self.caller + ("" if parent == "" else ":" + parent)
         nid = parent + ":" + name
         self.tree.create_node(name, nid, parent, func)
 
