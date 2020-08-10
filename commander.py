@@ -9,7 +9,7 @@ class Commander:
 
         self.tree.create_node(self.caller, self.caller)
 
-    def __call__(self, cmd:str):
+    def run(self, cmd:str):
         if cmd.find(self.caller) == 0:
             cmd = "\"" + self.caller + "\" " + cmd[len(self.caller):]
             phrases = shlex.split(cmd)
@@ -18,7 +18,7 @@ class Commander:
             return self._run(p, *a)
 
     # Decorator to add commands
-    def command(self, name="", parent=""):
+    def __call__(self, name="", parent=""):
         def decorator(func):
             self._add_func(func, name, parent)
         return decorator
