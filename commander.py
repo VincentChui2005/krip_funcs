@@ -1,4 +1,5 @@
 from .imported.treelib import Tree
+from typing import Optional
 import shlex
 
 
@@ -6,6 +7,8 @@ class Commander:
     def __init__(self, caller=""):
         self.caller = caller
         self.tree = Tree()
+        self.events = {"on_error": None}
+
 
         self.tree.create_node(self.caller, self.caller)
 
@@ -16,11 +19,21 @@ class Commander:
 
             p, a = self._split(phrases)
             return self._run(p, *a)
+        return None
 
     # Decorator to add commands
     def __call__(self, name="", parent=""):
         def decorator(func):
             self._add_func(func, name, parent)
+        return decorator
+
+    # Drcorator to add event handlers
+    def event(self):
+        def decorator(func):
+            if func.__name__ == "on_error":
+                self.events["on_error"] = func
+            else:
+                raise Exception("Invalid event")
         return decorator
 
 
@@ -41,9 +54,12 @@ class Commander:
         return func_path, args
 
     def _run(self, func_path, *args):
-        func = self.tree.get_node(func_path).data
+        node = self.tree.get_node(func_path)
+        if node is None:
+            raise Exception("")
+        func = node.data
         if func is None:
-            raise Exception("function not found")
+            self._raise(FunctionNotFound("Function not found, and error handler not registered"))
         else:
             return func(*args)
 
@@ -53,3 +69,13 @@ class Commander:
         nid = parent + ":" + name
         self.tree.create_node(name, nid, parent, func)
 
+    def _raise(self, error):
+        if self.events["on_error"] is not None:
+            self.events["on_error"](error)
+        else:
+            raise error
+
+
+class FunctionNotFound(Exception):
+    def __init__(self, msg):
+        self.msg = msg
